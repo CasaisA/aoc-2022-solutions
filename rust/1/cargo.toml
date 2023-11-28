@@ -1,0 +1,10 @@
+[package]
+name = "day1"
+version = "0.1.0"
+authors = ["Adrian Casais"]
+edition = "2021"
+
+[lib]
+path = "src/main.rs"
+[profile.dev]
+opt-level=3
