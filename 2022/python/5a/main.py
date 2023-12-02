@@ -5,6 +5,7 @@ def move(number, origin, destination):
     for n in range(number):
         destination.append(origin.pop())
 
+
 if __name__ == '__main__':
     with open('input.txt', 'r') as file:
         input = file.read()
