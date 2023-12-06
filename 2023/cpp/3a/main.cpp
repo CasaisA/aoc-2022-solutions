@@ -5,8 +5,8 @@
 #include <regex>
 #include <vector>
 
+#include <chrono>
 // #include <bits/stdc++.h>
-using strings = std::vector<std::string>;
 struct OpenFile {
   OpenFile(std::string name) { m_input.open(name, std::ios::in); }
   ~OpenFile() {
@@ -48,9 +48,9 @@ bool adjacent(NumPos digit, std::vector<int> positions, bool current) {
     adjacent |= ((digit.first - positions[i]) == 1) ||
                 ((digit.last - positions[i]) == -1);
     // if (!current)
-    adjacent |=
-        digit.first <= positions[i] && positions[i] <= digit.last;
-    // if (adjacent) std::cout << "digit " << digit.digit << " is adjacent in pos " << positions[i] << std::endl;
+    adjacent |= digit.first <= positions[i] && positions[i] <= digit.last;
+    // if (adjacent) std::cout << "digit " << digit.digit << " is adjacent in
+    // pos " << positions[i] << std::endl;
   }
   return adjacent;
 }
@@ -84,7 +84,32 @@ std::vector<int> get_punct_positions(std::string line) {
   }
   return output;
 }
+int local_result(std::string previous_line, std::string current_line,
+                 std::string next_line) {
+
+  std::vector<NumPos> next_digits = tokenize_nums(next_line);
+  std::vector<NumPos> current_digits = tokenize_nums(current_line);
+  std::vector<NumPos> previous_digits = tokenize_nums(previous_line);
+
+  std::vector<int> current_pos = get_punct_positions(current_line);
+  std::vector<int> next_pos = get_punct_positions(next_line);
+  std::vector<int> previous_pos = get_punct_positions(previous_line);
+  bool isadjacent = false;
+  int current_result = 0;
+  for (auto digit : current_digits) {
+    isadjacent |= adjacent(digit, current_pos, true);
+    isadjacent |= adjacent(digit, next_pos, false);
+    isadjacent |= adjacent(digit, previous_pos, false);
+    if (isadjacent) {
+      int appender = myatoi(digit.digit);
+      current_result += appender;
+      isadjacent = false;
+    }
+  };
+  return current_result;
+}
 int main() {
+  auto start = std::chrono::high_resolution_clock::now();
   OpenFile myfile("input.txt");
   auto *p = myfile.getInput();
   std::string tp;
@@ -104,61 +129,19 @@ int main() {
   std::getline(*p, current_line);
   unsigned line_counter = 1;
   while (std::getline(*p, next_line)) {
-    // if (line_counter == 0)
-    //   current_line = next_line;
-    // std::getline(*p, next_line);
-    // std::cout << "p: " << previous_line.substr(0, 20) << std::endl;
-    // std::cout << "c: " << current_line.substr(0, 20) << std::endl;
-    // std::cout << "n: " << next_line.substr(0, 20) << std::endl;
-    // std::cout << "+++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-    next_digits = tokenize_nums(next_line);
-    current_digits = tokenize_nums(current_line);
-    previous_digits = tokenize_nums(previous_line);
-
-    current_pos = get_punct_positions(current_line);
-    next_pos = get_punct_positions(next_line);
-    previous_pos = get_punct_positions(previous_line);
-    bool isadjacent = false;
-    for (auto digit : current_digits) {
-      isadjacent |= adjacent(digit, current_pos, true);
-      isadjacent |= adjacent(digit, next_pos, false);
-      isadjacent |= adjacent(digit, previous_pos, false);
-      // std::cout << digit.digit << std::endl;
-      if (isadjacent) {
-        int appender = myatoi(digit.digit);
-        std::cout << appender << " " << digit.digit << std::endl;
-        final_result += appender;
-      isadjacent=false;
-      }
-    };
-
+    final_result += local_result(previous_line, current_line, next_line);
     previous_line = current_line;
     current_line = next_line;
-    line_counter += 1; // call getline twice
+    line_counter += 1;
   };
 
-  // boiler plate last line
   next_line = "";
-  next_digits = tokenize_nums(next_line);
-  current_digits = tokenize_nums(current_line);
-  previous_digits = tokenize_nums(previous_line);
+  // One more time
+  final_result += local_result(previous_line, current_line, next_line);
 
-  current_pos = get_punct_positions(current_line);
-  next_pos = get_punct_positions(next_line);
-  previous_pos = get_punct_positions(previous_line);
-  bool isadjacent = false;
-  for (auto digit : current_digits) {
-    isadjacent |= adjacent(digit, current_pos, true);
-    isadjacent |= adjacent(digit, next_pos, false);
-    isadjacent |= adjacent(digit, previous_pos, false);
-    if (isadjacent) {
-      int appender = myatoi(digit.digit);
-      std::cout << appender << " " << digit.digit << std::endl;
-      final_result += appender;
-      isadjacent=false;
-    }
-  };
-
+  auto end = std::chrono::high_resolution_clock::now();
+  const std::chrono::duration<float, std::milli> diff = end - start;
+  std::cout << "Elapsed " << diff.count() << std::endl;
   std::cout << line_counter << std::endl;
   std::cout << final_result << std::endl;
 }
